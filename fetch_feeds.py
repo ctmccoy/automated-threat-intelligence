@@ -84,9 +84,16 @@ def save_data(filename, data):
 if __name__ == "__main__":
     fetch_alienvault_feeds()
     
-    # Example IP addresses to check (can be modified)
-    test_ips = ["8.8.8.8", "1.1.1.1"]
+    # Allow user to input multiple IPs
+    user_ips = input("Enter IP addresses to check (comma seperated): ").strip()
 
-    for ip in test_ips:
+    # Convert input string to a list of IPs
+    ip_list = [ip.strip() for ip in user_ips.split(",") if ip.strip()]
+
+    if not ip_list:
+        print("[-] Invalid IP...")
+        exit(1)
+
+    for ip in ip_list:
         fetch_virustotal_data(ip)
         fetch_abuseipdb_data(ip)
