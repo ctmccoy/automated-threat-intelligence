@@ -1,0 +1,13 @@
+#Ignore API keys and Sensitive Files.
+
+config.py
+
+#Ignore compiled Python Files.
+
+_pycache_/
+
+#Ignore output files.
+
+output/
+
+
