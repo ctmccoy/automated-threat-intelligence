@@ -10,5 +10,6 @@ Gathers data and intelligence from:
     "AbuseIPDB"
 
 
-The script "fetch_feeds.py" allows a user to input IP addresses and recieve real-time threat intelligence.  Files are saved in .JSON format for easy analysis.
+The script "fetch_feeds.py" allows a user to input IP addresses and receive real-time threat intelligence.  
+The script "analyze_data.py" allows a user to input IP addresses and receive structured data visualization and analysis.
 
