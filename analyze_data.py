@@ -100,8 +100,33 @@ def calculate_risk_score(ip):
 if __name__ == "__main__":
     analyze_alienvault()
 
-    ip_input = input("\nEnter an IP to analyze (or press Enter to skip): ").strip()
-    if ip_input:
-        analyze_virustotal(ip_input)
-        analyze_abuseipdb(ip_input)
-        calculate_risk_score(ip_input)
+# Load IPs from a file for automation OR prompt user if running manually
+IP_FILE = "input_ips.txt"
+
+def get_ips():
+    """Retrieve IPs from file if available, otherwise prompt user."""
+    if os.path.exists(IP_FILE):
+        with open(IP_FILE, "r") as file:
+            ip_list = [line.strip() for line in file if line.strip()]
+        if ip_list:
+            print(f"\n[+] Loaded {len(ip_list)} IPs from {IP_FILE}")
+            return ip_list
+
+    # If no file found, prompt user (only in manual mode)
+    if os.isatty(0):  # Check if running in a terminal
+        ip_input = input("\nEnter an IP to analyze (comma-separated): ").strip()
+        return [ip.strip() for ip in ip_input.split(",") if ip.strip()]
+    
+    return []
+
+if __name__ == "__main__":
+    analyze_alienvault()
+
+    ip_list = get_ips()
+    if not ip_list:
+        print("[-] No IPs to analyze. Exiting...")
+        exit(1)
+
+    for ip in ip_list:
+        analyze_virustotal(ip)
+        analyze_abuseipdb(ip)
