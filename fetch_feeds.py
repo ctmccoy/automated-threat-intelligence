@@ -81,18 +81,25 @@ def save_data(filename, data):
     
     print(f"[+] Data saved to {output_path}")
 
+IP_FILE = "input_ips.txt"
+
+def get_ips():
+    """Retrieve IPs from file if available, otherwise exit."""
+    if os.path.exists(IP_FILE):
+        with open(IP_FILE, "r") as file:
+            ip_list = [line.strip() for line in file if line.strip()]
+        if ip_list:
+            print(f"\n[+] Loaded {len(ip_list)} IPs from {IP_FILE}")
+            return ip_list
+
+    print("[-] No valid IPs found in input_ips.txt. Exiting...")
+    exit(1)
+
 if __name__ == "__main__":
     fetch_alienvault_feeds()
     
-    # Allow user to input multiple IPs
-    user_ips = input("Enter IP addresses to check (comma seperated): ").strip()
-
-    # Convert input string to a list of IPs
-    ip_list = [ip.strip() for ip in user_ips.split(",") if ip.strip()]
-
-    if not ip_list:
-        print("[-] Invalid IP...")
-        exit(1)
+    # Fetch IPs from file instead of user input
+    ip_list = get_ips()
 
     for ip in ip_list:
         fetch_virustotal_data(ip)
