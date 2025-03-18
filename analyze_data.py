@@ -1,3 +1,6 @@
+#automated threat intelligence fetch.  Using a .JSON file, this program can analyze and visualize the data by includinng most visited domains, percentage of protocols used, and will reference an external .txt file (input_ips.txt) against known vulknerability DB to return threat intelligence against any IPs within that .txt file
+
+
 import json
 import os
 import requests
