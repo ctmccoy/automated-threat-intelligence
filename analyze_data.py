@@ -22,7 +22,7 @@ def analyze_alienvault():
     if not data:
         return
 
-    print("\n📌 **AlienVault OTX Insights**")
+    print("\n **AlienVault OTX Insights**")
     for pulse in data.get("results", []):
         print(f"- **{pulse['name']}** ({pulse['created']})")
         print(f"  Tags: {', '.join(pulse.get('tags', []))}")
@@ -34,7 +34,7 @@ def analyze_virustotal(ip):
     if not data:
         return
 
-    print(f"\n📌 **VirusTotal Analysis for {ip}**")
+    print(f"\n **VirusTotal Analysis for {ip}**")
     attributes = data.get("data", {}).get("attributes", {})
     
     analysis_stats = attributes.get("last_analysis_stats", {})
@@ -59,7 +59,7 @@ def analyze_abuseipdb(ip):
     if not data:
         return
 
-    print(f"\n📌 **AbuseIPDB Analysis for {ip}**")
+    print(f"\n **AbuseIPDB Analysis for {ip}**")
     reports = data.get("data", {})
 
     confidence_score = reports.get("abuseConfidenceScore", 0)
@@ -73,7 +73,7 @@ def analyze_abuseipdb(ip):
     print(tabulate(table, headers=["Metric", "Value"], tablefmt="grid"))
 
     if confidence_score > 50:
-        print("⚠️ **This IP has a high abuse confidence score!** ⚠️")
+        print(" **This IP has a high abuse confidence score!** ")
 
 def calculate_risk_score(ip):
     """Calculate an overall risk score based on VirusTotal and AbuseIPDB data."""
@@ -85,7 +85,7 @@ def calculate_risk_score(ip):
 
     if vt_data:
         vt_stats = vt_data.get("data", {}).get("attributes", {}).get("last_analysis_stats", {})
-        vt_score = vt_stats.get("malicious", 0) * 10  # Weight VT malicious detections higher
+        vt_score = vt_stats.get("malicious", 0) * 10  #multiplier indicating VT detections carry a higher risk
 
     if abuse_data:
         abuse_score = abuse_data.get("data", {}).get("abuseConfidenceScore", 0)
@@ -98,12 +98,12 @@ def calculate_risk_score(ip):
     elif total_score >= 40:
         risk_level = "Medium"
 
-    print(f"\n🚨 **Overall Risk Score for {ip}: {total_score} ({risk_level} Risk)** 🚨")
+    print(f"\n **Overall Risk Score for {ip}: {total_score} ({risk_level} Risk)** ")
 
 if __name__ == "__main__":
     analyze_alienvault()
 
-# Load IPs from a file for automation OR prompt user if running manually
+#programmed to automate readinng from .txt file or a user can input manual IPs when prompted
 IP_FILE = "input_ips.txt"
 
 def get_ips():
@@ -115,8 +115,8 @@ def get_ips():
             print(f"\n[+] Loaded {len(ip_list)} IPs from {IP_FILE}")
             return ip_list
 
-    # If no file found, prompt user (only in manual mode)
-    if os.isatty(0):  # Check if running in a terminal
+    #MANUAL MODE if input_ips.txt is not detected
+    if os.isatty(0):  #check running location such as terminal
         ip_input = input("\nEnter an IP to analyze (comma-separated): ").strip()
         return [ip.strip() for ip in ip_input.split(",") if ip.strip()]
     
