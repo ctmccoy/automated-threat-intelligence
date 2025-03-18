@@ -10,6 +10,9 @@ Gathers data and intelligence from:
     "AbuseIPDB"
 
 
-The script "fetch_feeds.py" allows a user to input IP addresses and receive real-time threat intelligence.  
-The script "analyze_data.py" allows a user to input the path to a .PCAP or .PCAPNG file and receive structured data visualization.
+The Python 3 program "fetch_feeds.py" allows a user to input IP addresses and receive real-time threat intelligence.  
+The Python 3 program "analyze_data.py" allows a user to input the path to a .PCAP or .PCAPNG file and receive structured data visualization.
+
+Users can load IPs from the analysis into the input_ips.txt file and the program will automatically reference those IPs against known vulnerability databases to return malicious intent rating for user.
+
 
