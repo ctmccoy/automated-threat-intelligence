@@ -2,6 +2,16 @@
 8.8.8.8
 74.101.92.209
 
+# TEST IPs
+185.220.101.1	#Tor exit node (potential threat)
+222.186.30.56	#Commonly flagged scanner IP
+10.0.0.1	#Private range (simulate internal)
+192.168.1.100	#Private IP (local test)
+45.155.205.132	#Often seen in brute force attacks
+203.0.113.45	#TEST-NET-3 (reserved for examples)
+127.0.0.1	#Loopback (test functionality)
+
+
 # DO NOT PROBE known malicious IPs for check with API only
 103.21.244.0
 222.186.30.56
