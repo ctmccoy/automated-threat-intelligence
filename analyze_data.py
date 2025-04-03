@@ -6,7 +6,7 @@ import argparse
 from tabulate import tabulate
 from datetime import datetime
 
-# Optional: Use rich for color, if installed
+#rich color
 try:
     from rich import print
 except ImportError:
@@ -40,6 +40,8 @@ def analyze_alienvault(otx_path):
 
     return summary_md
 
+#Defining API functions
+# virus total function
 def analyze_virustotal(ip_path):
     data = load_json(ip_path)
     if not data:
