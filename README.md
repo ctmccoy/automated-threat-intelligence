@@ -1,14 +1,36 @@
 ## Automated Threat Intelligence Feed using Python
 
-#### Gathers updated threat intelligence from:
-    "AlienVault OTX"
-    "Virus Total"
-    "AbuseIPDB"
+- 1️⃣ Gathers updated threat intelligence from "AlienVault OTX" "Virus Total" "AbuseIPDB".
+- 2️⃣ Generates threat intelligence from user IP list.
+- 3️⃣ Visualizes any data found from the threat intelligence and provides a risk score assessment.
 
-`analyze_data.py` allows a user to input the path to a .PCAP or .PCAPNG file and receive structured data visualization.
 
-`fetch_feeds.py` allows a user to input IP addresses and receive real-time threat intelligence.  
+---
 
+### Workflow ➡️ End-to-End Pipeline:
+
+
+#### 🕵️ Step 1: Fetch Data from Intelligence Feeds
+Use *`fetch_feeds.py`* to:
+- Pull global threat data from AlienVault OTX
+- Query VirusTotal and AbuseIPDB for each IP in input_ips.txt
+- Save all results in structured JSON format under output/
+
+🖥️ How to Run `fetch_feeds.py`:
+
+    cd automated-threat-intelligence
+    python3 fetch_feeds.py
+
+#### 🔍 Step 2: Analyze & Summarize the Results
+Use *`analyze_data.py`* to:
+- Parse the JSON results in output/
+- Generate readable summaries
+- Calculate overall risk scores for each IP
+
+🖥️ How to Run `analyze_data.py`:
+
+    cd automated-threat-intelligence
+    python3 analyze_data.py
 ---
 ---
 ---
@@ -81,17 +103,5 @@ print("OTX:", os.getenv("OTX_API_KEY"))
 print("AbuseIPDB:", os.getenv("ABUSEIPDB_API_KEY"))
 ```
 ---
----
----
-
-### 🖥️ How to Run "fetch_feeds.py":
-
-    cd automated-threat-intelligence
-    python3 fetch_feeds.py
-
-Or with a custom input:
-
-    python3 fetch_feeds.py --input other_ips.txt
-
 ---
 ---
