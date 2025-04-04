@@ -1,5 +1,9 @@
 #!/usr/bin/zsh
 
+# ================================
+# ./auto.sh
+# ================================
+
 echo "Automated Threat Intelligence Information and Analysis"
 
 #Move to project directory
