@@ -1,7 +1,7 @@
 ## Automated Threat Intelligence Feed using Python
 
 - 1️⃣ Gathers updated threat intelligence from "AlienVault OTX" "Virus Total" "AbuseIPDB".
-- 2️⃣ Generates threat intelligence from user IP list.
+- 2️⃣ Generates threat intelligence from user created list of IP addresses.
 - 3️⃣ Visualizes any data found from the threat intelligence and provides a risk score assessment.
 
 
