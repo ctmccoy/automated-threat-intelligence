@@ -1,155 +1,76 @@
-#!/usr/bin/env python3
+# ================================
+# analyze_data.py (Updated)
+# ================================
 
-import json
 import os
-import argparse
-from tabulate import tabulate
+import json
+import logging
 from datetime import datetime
 
-#rich color
-try:
-    from rich import print
-except ImportError:
-    pass  # fallback to standard print if rich isn't available
+def get_latest_run_dir(base_dir="output"):
+    runs = [d for d in os.listdir(base_dir) if d.startswith("run_")]
+    if not runs:
+        return None
+    runs.sort(reverse=True)
+    return os.path.join(base_dir, runs[0])
 
-def load_json(filename):
-    """Load JSON data from a file."""
-    if not os.path.exists(filename):
-        print(f"[yellow][-] File not found: {filename}[/yellow]")
+def load_json(path):
+    if not os.path.exists(path):
+        logging.error("The file %s was not found!", path)
+        print(f"[-] File {path} not found.")
+        return None
+    try:
+        with open(path, "r") as f:
+            return json.load(f)
+    except json.JSONDecodeError as e:
+        logging.error("Error decoding JSON from %s: %s", path, e)
         return None
 
-    with open(filename, "r") as file:
-        return json.load(file)
+def analyze_ip(ip, run_dir):
+    vt_data = load_json(os.path.join(run_dir, ip, "virustotal.json"))
+    abuse_data = load_json(os.path.join(run_dir, ip, "abuseipdb.json"))
 
-def analyze_alienvault(otx_path):
-    """Summarize AlienVault OTX data."""
-    data = load_json(otx_path)
-    if not data:
-        return ""
+    vt_score = 0
+    abuse_score = 0
 
-    print("\n[bold cyan]=== AlienVault OTX Insights ===[/bold cyan]")
-    summary_md = "### AlienVault OTX Insights\n\n"
-    for pulse in data.get("results", []):
-        print(f"[bold]- {pulse['name']}[/bold] ({pulse['created']})")
-        print(f"  Tags: {', '.join(pulse.get('tags', []))}")
-        print(f"  Indicators: {len(pulse.get('indicators', []))} items\n")
+    print(f"\n========= Analysis for {ip} =========")
 
-        summary_md += f"- **{pulse['name']}** ({pulse['created']})\n"
-        summary_md += f"  - Tags: {', '.join(pulse.get('tags', []))}\n"
-        summary_md += f"  - Indicators: {len(pulse.get('indicators', []))} items\n"
+    if vt_data:
+        stats = vt_data.get("data", {}).get("attributes", {}).get("last_analysis_stats", {})
+        vt_score = stats.get("malicious", 0) * 10
+        print(f"[VT] Malicious: {stats.get('malicious', 'N/A')}, Suspicious: {stats.get('suspicious', 'N/A')}, Harmless: {stats.get('harmless', 'N/A')}")
 
-    return summary_md
+    if abuse_data:
+        abuse_score = abuse_data.get("data", {}).get("abuseConfidenceScore", 0)
+        print(f"[AbuseIPDB] Confidence Score: {abuse_score}, Total Reports: {abuse_data.get('data', {}).get('totalReports', 'N/A')}")
 
-#Defining API functions
-# virus total function
-def analyze_virustotal(ip_path):
-    data = load_json(ip_path)
-    if not data:
-        return "", 0
-
-    attributes = data.get("data", {}).get("attributes", {})
-    stats = attributes.get("last_analysis_stats", {})
-    reputation = attributes.get("reputation", 0)
-    categories = ", ".join(attributes.get("categories", {}).values()) or "N/A"
-
-    vt_score = stats.get("malicious", 0) * 10
-
-    print(f"\n[bold magenta]=== VirusTotal Analysis for {os.path.basename(ip_path)} ===[/bold magenta]")
-    table = [
-        ["Malicious Detections", stats.get("malicious", "N/A")],
-        ["Harmless Detections", stats.get("harmless", "N/A")],
-        ["Suspicious Detections", stats.get("suspicious", "N/A")],
-        ["Reputation Score", reputation],
-        ["Threat Categories", categories]
-    ]
-    print(tabulate(table, headers=["Metric", "Value"], tablefmt="grid"))
-
-    md = f"\n### VirusTotal Analysis for {os.path.basename(ip_path)}\n"
-    md += tabulate(table, headers=["Metric", "Value"], tablefmt="github") + "\n"
-
-    return md, vt_score
-
-def analyze_abuseipdb(ip_path):
-    data = load_json(ip_path)
-    if not data:
-        return "", 0
-
-    abuse = data.get("data", {})
-    score = abuse.get("abuseConfidenceScore", 0)
-
-    print(f"\n[bold red]=== AbuseIPDB Analysis for {os.path.basename(ip_path)} ===[/bold red]")
-    table = [
-        ["Total Reports", abuse.get("totalReports", "N/A")],
-        ["Abuse Confidence Score", score],
-        ["Country", abuse.get("countryCode", "N/A")],
-        ["Last Reported", abuse.get("lastReportedAt", "N/A")]
-    ]
-    print(tabulate(table, headers=["Metric", "Value"], tablefmt="grid"))
-    if score > 50:
-        print("[bold red]⚠️ This IP has a high abuse confidence score![/bold red]")
-
-    md = f"\n### AbuseIPDB Analysis for {os.path.basename(ip_path)}\n"
-    md += tabulate(table, headers=["Metric", "Value"], tablefmt="github") + "\n"
-
-    return md, score
-
-def calculate_risk(vt_score, abuse_score):
-    total = vt_score + abuse_score
-    if total >= 75:
-        return "High", total
-    elif total >= 40:
-        return "Medium", total
-    return "Low", total
-
-def parse_args():
-    parser = argparse.ArgumentParser(description="Analyze threat intelligence data from JSON files.")
-    parser.add_argument("-i", "--input", default="input_ips.txt", help="Path to file with IPs (default: input_ips.txt)")
-    parser.add_argument("-o", "--output", default="output", help="Folder where JSON files are stored (default: ./output)")
-    parser.add_argument("--report", help="Optional: Path to save Markdown report")
-    return parser.parse_args()
+    total_score = vt_score + abuse_score
+    if total_score >= 75:
+        risk = "High"
+    elif total_score >= 40:
+        risk = "Medium"
+    else:
+        risk = "Low"
+    print(f"The total risk score for {ip}: {total_score} ({risk} RISK)")
 
 def main():
-    args = parse_args()
-    report_md = "# Threat Intelligence Summary\n"
-    summary_table = []
+    logging.basicConfig(filename="analyze.log", level=logging.ERROR)
 
-    otx_path = os.path.join(args.output, "alienvault_otx.json")
-    report_md += analyze_alienvault(otx_path)
-
-    if not os.path.exists(args.input):
-        print(f"[-] Input file not found: {args.input}")
+    run_dir = get_latest_run_dir()
+    if not run_dir:
+        print("[-] No run_* directory found in output/.")
         return
 
-    with open(args.input, "r") as f:
+    ip_file = "input_ips.txt"
+    if not os.path.exists(ip_file):
+        print("[-] input_ips.txt not found!")
+        return
+
+    with open(ip_file, "r") as f:
         ips = [line.strip() for line in f if line.strip()]
 
-    if not ips:
-        print("[-] No IPs found to analyze.")
-        return
-
-    print(f"\n[+] Analyzing {len(ips)} IPs...\n")
-
     for ip in ips:
-        vt_file = os.path.join(args.output, f"virustotal_{ip}.json")
-        abuse_file = os.path.join(args.output, f"abuseipdb_{ip}.json")
-
-        vt_md, vt_score = analyze_virustotal(vt_file)
-        ab_md, abuse_score = analyze_abuseipdb(abuse_file)
-        risk, total = calculate_risk(vt_score, abuse_score)
-
-        report_md += vt_md + ab_md
-        report_md += f"**Overall Risk for {ip}: {total} ({risk} Risk)**\n\n"
-
-        summary_table.append([ip, vt_score, abuse_score, total, risk])
-
-    # Final risk summary
-    print("\n[bold cyan]=== Summary Risk Table ===[/bold cyan]")
-    print(tabulate(summary_table, headers=["IP", "VT Score", "Abuse Score", "Total", "Risk Level"], tablefmt="grid"))
-
-    if args.report:
-        with open(args.report, "w") as f:
-            f.write(report_md)
-        print(f"\n[✓] Report saved to: {args.report}")
+        analyze_ip(ip, run_dir)
 
 if __name__ == "__main__":
     main()
