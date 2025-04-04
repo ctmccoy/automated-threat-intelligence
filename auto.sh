@@ -1,24 +1,25 @@
-#!/usr/bin/zsh
 
 # ================================
 # ./auto.sh
 # ================================
 
-echo "Automated Threat Intelligence Information and Analysis"
+#!/usr/bin/zsh
 
-#move to project directory
+
+echo "🚀 Starting Automated Threat Intelligence Pipeline"
+
 cd ~/automated-threat-intelligence || exit 1
 
-# running fetch script
-echo "[-] Gathering Threat Intelligence..."
+# Step 1: Fetch feeds
+echo "[+] Running fetch_feeds.py"
 python3 fetch_feeds.py
 
-# run analysis script
-echo "[-] Analyzing Threat Intelligence Data..."
-python3 analyze_data.py > output/analysis_report.txt
+# Step 2: Analyze fetched data
+echo "[+] Running analyze_data.py"
+python3 analyze_data.py
 
-#log function for management
+# Step 3: Timestamped copy of the report
 timestamp=$(date +"%Y-%m-%d_%H-%M-%S")
-cd output/analysis_report.txt output/analysis_report_$timestamp.txt
+cp output/analysis_report.txt output/analysis_report_$timestamp.txt
 
-echo "Automated Script Completed located in output/analysis_report_$timestamp.txt
+echo "✅ All done. Timestamped report: output/analysis_report_$timestamp.txt"
