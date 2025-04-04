@@ -1,3 +1,11 @@
+#this is the text file where the user places all the IP addresses they want to assess.
+
+# ================================
+# input_ips.txt
+# ================================
+
+
+
 1.1.1.1
 8.8.8.8
 74.101.92.209
