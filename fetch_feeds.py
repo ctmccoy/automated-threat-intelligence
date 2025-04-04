@@ -1,112 +1,84 @@
-#Python3 program to fetch threat intelligence from 3 updated feeds
-#!/usr/bin/env python3
+# ================================
+# fetch_feeds.py
+# ================================
+
 
 import requests
 import json
 import os
-import argparse
 from datetime import datetime
+import time
 
-# Load API Keys from environment variables
+# Load API keys
 OTX_API_KEY = os.getenv("OTX_API_KEY")
 VT_API_KEY = os.getenv("VT_API_KEY")
 ABUSEIPDB_API_KEY = os.getenv("ABUSEIPDB_API_KEY")
 
-# Validate API Keys
 if not OTX_API_KEY or not VT_API_KEY or not ABUSEIPDB_API_KEY:
-    print("[-] ERROR: One or more API keys are missing. Please check your ~/.zshrc or environment variables.")
+    print("[-] ERROR: One or more API keys are missing. Check your environment variables.")
     exit(1)
 
-# API Endpoints
+# API URLs
 OTX_URL = "https://otx.alienvault.com/api/v1/pulses/subscribed"
 VT_URL = "https://www.virustotal.com/api/v3/ip_addresses/"
 ABUSEIPDB_URL = "https://api.abuseipdb.com/api/v2/check"
 
-def save_json(output_path, data):
-    os.makedirs(os.path.dirname(output_path), exist_ok=True)
-    with open(output_path, "w") as f:
+def save_data(path, data):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w") as f:
         json.dump(data, f, indent=4)
-    print(f"[✓] Data saved to {output_path}")
+    print(f"[+] Saved to {path}")
 
-def fetch_alienvault_feeds(output_dir):
-    print("[*] Fetching AlienVault OTX feeds...")
+def fetch_alienvault(run_dir):
+    print("[*] Fetching AlienVault OTX...")
     headers = {"X-OTX-API-KEY": OTX_API_KEY}
     try:
-        response = requests.get(OTX_URL, headers=headers)
-        if response.status_code == 200:
-            data = response.json()
-            save_json(os.path.join(output_dir, "alienvault_otx.json"), data)
+        r = requests.get(OTX_URL, headers=headers)
+        if r.status_code == 200:
+            save_data(os.path.join(run_dir, "alienvault_otx.json"), r.json())
         else:
-            print(f"[-] OTX Error {response.status_code}: {response.text}")
-    except requests.RequestException as e:
-        print(f"[-] Error connecting to OTX: {e}")
+            print(f"[-] AlienVault error: {r.status_code}")
+    except Exception as e:
+        print(f"[-] AlienVault exception: {e}")
 
-def fetch_virustotal_data(ip, output_dir):
+def fetch_virustotal(ip, path):
     headers = {"x-apikey": VT_API_KEY}
-    url = VT_URL + ip
-    try:
-        response = requests.get(url, headers=headers)
-        if response.status_code == 200:
-            data = response.json()
-            save_json(os.path.join(output_dir, ip, "virustotal.json"), data)
-        elif response.status_code == 429:
-            print(f"[!] VirusTotal rate limit hit for IP {ip}.")
-        else:
-            print(f"[-] VirusTotal Error {response.status_code}: {response.text}")
-    except requests.RequestException as e:
-        print(f"[-] Error fetching VirusTotal data for {ip}: {e}")
-
-def fetch_abuseipdb_data(ip, output_dir):
-    headers = {
-        "Key": ABUSEIPDB_API_KEY,
-        "Accept": "application/json"
-    }
-    params = {"ipAddress": ip, "maxAgeInDays": 90}
-    try:
-        response = requests.get(ABUSEIPDB_URL, headers=headers, params=params)
-        if response.status_code == 200:
-            data = response.json()
-            save_json(os.path.join(output_dir, ip, "abuseipdb.json"), data)
-        elif response.status_code == 429:
-            print(f"[!] AbuseIPDB rate limit hit for IP {ip}.")
-        else:
-            print(f"[-] AbuseIPDB Error {response.status_code}: {response.text}")
-    except requests.RequestException as e:
-        print(f"[-] Error fetching AbuseIPDB data for {ip}: {e}")
-
-def get_ip_list(file_path):
-    if os.path.exists(file_path):
-        with open(file_path, "r") as file:
-            return [line.strip() for line in file if line.strip()]
+    r = requests.get(VT_URL + ip, headers=headers)
+    if r.status_code == 200:
+        save_data(os.path.join(path, "virustotal.json"), r.json())
     else:
-        print(f"[-] IP file not found: {file_path}")
-        exit(1)
+        print(f"[-] VT error for {ip}: {r.status_code}")
+
+def fetch_abuseipdb(ip, path):
+    headers = {"Key": ABUSEIPDB_API_KEY, "Accept": "application/json"}
+    params = {"ipAddress": ip, "maxAgeInDays": 90}
+    r = requests.get(ABUSEIPDB_URL, headers=headers, params=params)
+    if r.status_code == 200:
+        save_data(os.path.join(path, "abuseipdb.json"), r.json())
+    else:
+        print(f"[-] AbuseIPDB error for {ip}: {r.status_code}")
 
 def main():
-    parser = argparse.ArgumentParser(description="Fetch threat intel from AlienVault, VirusTotal, and AbuseIPDB.")
-    parser.add_argument("-i", "--input", default="input_ips.txt", help="Path to input file with IP addresses")
-    parser.add_argument("--skip-otx", action="store_true", help="Skip AlienVault OTX feed")
-    parser.add_argument("-o", "--output", default="output", help="Directory to save output")
-    args = parser.parse_args()
+    timestamp = datetime.now().strftime("run_%Y-%m-%d_%H-%M-%S")
+    run_dir = os.path.join("output", timestamp)
+    os.makedirs(run_dir, exist_ok=True)
 
-    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    output_dir = os.path.join(args.output, f"run_{timestamp}")
-    os.makedirs(output_dir, exist_ok=True)
+    # AlienVault once per run
+    fetch_alienvault(run_dir)
 
-    print(f"\n[+] Output will be saved to: {output_dir}\n")
+    # Load IPs
+    if not os.path.exists("input_ips.txt"):
+        print("[-] input_ips.txt not found!")
+        return
 
-    if not args.skip_otx:
-        fetch_alienvault_feeds(output_dir)
+    with open("input_ips.txt") as f:
+        ips = [line.strip() for line in f if line.strip()]
 
-    ip_list = get_ip_list(args.input)
-    print(f"[+] Loaded {len(ip_list)} IP(s) from {args.input}")
-
-    for ip in ip_list:
-        print(f"\n[*] Fetching data for IP: {ip}")
-        fetch_virustotal_data(ip, output_dir)
-        fetch_abuseipdb_data(ip, output_dir)
-
-    print(f"\n[✓] Threat intelligence collection complete. Results stored in '{output_dir}'.")
+    for ip in ips:
+        ip_dir = os.path.join(run_dir, ip)
+        fetch_virustotal(ip, ip_dir)
+        fetch_abuseipdb(ip, ip_dir)
+        time.sleep(2)  # Prevent API rate limits
 
 if __name__ == "__main__":
     main()
