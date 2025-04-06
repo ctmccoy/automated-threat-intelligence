@@ -10,4 +10,8 @@ _pycache_/
 
 output/
 
+#ignore log files
+
+analyze.log
+
 

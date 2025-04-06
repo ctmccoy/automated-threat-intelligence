@@ -1,10 +1,8 @@
-
 # ================================
 # ./auto.sh
 # ================================
 
 #!/usr/bin/zsh
-
 
 echo "🚀 Starting Automated Threat Intelligence Pipeline"
 
