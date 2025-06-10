@@ -13,14 +13,18 @@ logging.basicConfig(filename="analyze.log", level=logging.INFO, format="%(asctim
 
 # Constants
 OUTPUT_DIR = "output"
-IP_FILE = "input_ips.txt"
+IP_FILE = "IPs.txt"
 
-def get_latest_run_dir(base_dir=OUTPUT_DIR):
-    runs = [d for d in os.listdir(base_dir) if d.startswith("run_")]
-    if not runs:
-        return None
-    runs.sort(reverse=True)
-    return os.path.join(base_dir, runs[0])
+#creating the save file directory in /output
+RUN_FOLDER_NAME = datetime.now().strftime("%Y%m%d")
+RUN_DIR = os.path.join(OUTPUT_DIR, RUN_FOLDER_NAME)
+
+def get_latest_run_dir():
+    if os.path.isdir(RUN_DIR):
+        return RUN_DIR
+    else:
+        os.makedirs(RUN_DIR, exist_ok=True)
+        return RUN_DIR
 
 def load_json(path):
     if not os.path.exists(path):
@@ -118,7 +122,7 @@ def get_ips():
 def main():
     run_dir = get_latest_run_dir()
     if not run_dir:
-        print("[-] No run_* directory found in output/.")
+        print(f"[+] Using directory: {RUN_DIR}")
         return
 
     ip_list = get_ips()
@@ -128,17 +132,24 @@ def main():
         return
 
     output_lines = []
+
     for ip in ip_list:
         analyze_virustotal(ip, run_dir, output_lines)
         analyze_abuseipdb(ip, run_dir, output_lines)
         calculate_risk_score(ip, run_dir, output_lines)
 
-    # Write to output report
+#Generating time-date filename report
+    timestamp = datetime.now().strftime("%m%Y.txt")
+    report_path = os.path.join(OUTPUT_DIR, timestamp)
+
+#Output directory exists
     os.makedirs(OUTPUT_DIR, exist_ok=True)
-    with open(os.path.join(OUTPUT_DIR, "analysis_report.txt"), "w") as report:
+
+#Writing Report
+    with open(report_path, "w") as report:
         report.write("\n".join(output_lines))
 
-    print("[+] Report written to output/analysis_report.txt")
+    print(f"[+] Report Saved As {report_path}")
 
 if __name__ == "__main__":
     main()

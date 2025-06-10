@@ -34,7 +34,7 @@ def fetch_alienvault(run_dir):
     try:
         response = requests.get(OTX_URL, headers=headers)
         if response.status_code == 200:
-            save_data(os.path.join(run_dir, "alienvault_otx.json"), response.json())
+            save_data(os.path.join(run_dir, "AVOTX.json"), response.json())
         else:
             print(f"[-] AlienVault error: HTTP {response.status_code}")
     except Exception as e:
@@ -61,7 +61,7 @@ def fetch_abuseipdb(ip, ip_dir):
 
 # Main workflow
 def main():
-    timestamp = datetime.now().strftime("run_%Y-%m-%d_%H-%M-%S")
+    timestamp = datetime.now().strftime("%Y%m%d")
     run_dir = os.path.join("output", timestamp)
     os.makedirs(run_dir, exist_ok=True)
 
@@ -69,11 +69,11 @@ def main():
     fetch_alienvault(run_dir)
 
     # Step 2: Read IPs to analyze
-    if not os.path.exists("input_ips.txt"):
-        print("[-] input_ips.txt not found!")
+    if not os.path.exists("IPs.txt"):
+        print("[-] IPs.txt not found!")
         return
 
-    with open("input_ips.txt") as f:
+    with open("IPs.txt") as f:
         ips = [
             line.strip()
             for line in f
